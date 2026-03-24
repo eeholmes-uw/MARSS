@@ -1,0 +1,102 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Runs R CMD check, builds the PDF manual, and builds a pkgdown HTML preview
+# for the CSEGriskfigure documentation page. Artifacts are uploaded so they
+# can be downloaded and inspected.
+on:
+  push:
+    branches: [main, master, "copilot/**"]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+name: check-and-docs
+
+jobs:
+  check-and-docs:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      _R_CHECK_FORCE_SUGGESTS_: false
+      _R_CHECK_CRAN_INCOMING_: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+          extra-repositories: https://atsa-es.r-universe.dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            any::roxygen2
+            any::pkgdown
+            local::.
+          needs: check
+
+      # Regenerate man/*.Rd from the inline Roxygen2 headers
+      - name: Roxygenise
+        run: roxygen2::roxygenise()
+        shell: Rscript {0}
+
+      # Run R CMD check (mirrors the r-lib check-r-package action)
+      - name: R CMD check
+        id: rcmdcheck
+        run: |
+          options(crayon.enabled = TRUE)
+          if (Sys.getenv("_R_CHECK_FORCE_SUGGESTS_", "") == "") Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
+          if (Sys.getenv("_R_CHECK_CRAN_INCOMING_", "") == "") Sys.setenv("_R_CHECK_CRAN_INCOMING_" = "false")
+          check_results <- rcmdcheck::rcmdcheck(
+            args      = c("--no-manual", "--as-cran"),
+            build_args = "--no-manual",
+            error_on  = "warning",
+            check_dir = "check"
+          )
+        shell: Rscript {0}
+
+      - name: Show testthat output
+        if: always()
+        run: |
+          find check -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash
+
+      # Build the PDF reference manual
+      - name: Build PDF manual
+        run: |
+          R CMD Rd2pdf --no-preview --output=MARSS-manual.pdf .
+        shell: bash
+
+      # Build the full pkgdown site (HTML docs)
+      - name: Build pkgdown site
+        run: |
+          pkgdown::build_site(new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
+
+      # Upload the PDF manual as a downloadable artifact
+      - name: Upload PDF manual
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MARSS-pdf-manual
+          path: MARSS-manual.pdf
+
+      # Upload the pkgdown HTML site as a downloadable artifact
+      - name: Upload HTML docs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MARSS-html-docs
+          path: docs/
+
+      # Upload R CMD check results on failure
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-results
+          path: check/
