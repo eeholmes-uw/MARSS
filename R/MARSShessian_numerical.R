@@ -32,7 +32,7 @@
 #' dat <- dat[c(2, 11), ]
 #' MLEobj <- MARSS(dat)
 #' MARSS:::MARSShessian.numerical(MLEobj)
-#' @export
+#' @keywords internal
 MARSShessian.numerical <- function(MLEobj, fun = c("fdHess", "optim")) {
   fun <- match.arg(fun)
   kfNLL <- function(x, MLEobj = NULL) { # NULL assignment needed for optim call syntax

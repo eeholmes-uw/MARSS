@@ -39,7 +39,7 @@
 #' Holmes, E. E. 2016c. Notes on computing the Fisher Information matrix for MARSS models. Part III Overview of Harvey 1989. <https://eeholmes.github.io/posts/2016-6-16-FI-recursion-3/>
 #'
 #' Holmes, E. E. 2017. Notes on computing the Fisher Information matrix for MARSS models. Part IV Implementing the Recursion in Harvey 1989. <https://eeholmes.github.io/posts/2017-5-31-FI-recursion-4/>
-#' @export
+#' @keywords internal
 MARSSharveyobsFI <- function(MLEobj) {
   paramvector <- MARSSvectorizeparam(MLEobj)
   par.names <- names(paramvector)
