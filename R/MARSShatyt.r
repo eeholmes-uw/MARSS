@@ -2,6 +2,50 @@
 #   MARSShatyt function
 #   Expectations involving hatyt
 #######################################################################################################
+#' Compute Expected Value of Y, YY, and YX
+#'
+#' @description
+#' Computes the expected value of random variables involving \eqn{\mathbf{Y}}{Y}. Users can use [tsSmooth.marssMLE] or `print( MLEobj, what="Ey")` to access this output. See [print.marssMLE].
+#'
+#' @param MLEobj A [marssMLE] object with the `par` element of estimated parameters, `model` element with the model description and data.
+#' @param only.kem If TRUE, return only `ytT`, `OtT`, `yxtT`, and `yxttpT` (values conditioned on the data from \eqn{1:T}) needed for the EM algorithm. If `only.kem=FALSE`, then also return values conditioned on data from 1 to \eqn{t-1} (`Ott1` and `ytt1`) and 1 to \eqn{t} (`Ott` and `ytt`), `yxtt1T` (\eqn{\textrm{var}[\mathbf{Y}_t, \mathbf{X}_{t-1}|\mathbf{y}_{1:T}]}{var[Y(t),X(t-1)|1:T]}), var.ytT (\eqn{\textrm{var}[\mathbf{Y}_t|\mathbf{y}_{1:T}]}{var[Y(t)|1:T]}), and var.EytT (\eqn{\textrm{var}_X[E_{Y|x}[\mathbf{Y}_t|\mathbf{y}_{1:T},\mathbf{x}_t]]}{var_X[E_{Y|x}[Y(t)|1:T,x(t)]]}).
+#'
+#' @details
+#' For state space models, `MARSShatyt()` computes the expectations involving \eqn{\mathbf{Y}}{Y}. If \eqn{\mathbf{Y}}{Y} is completely observed, this entails simply replacing \eqn{\mathbf{Y}}{Y} with the observed \eqn{\mathbf{y}}{y}. When \eqn{\mathbf{Y}}{Y} is only partially observed, the expectation involves the conditional expectation of a multivariate normal.
+#'
+#' @return
+#' A list with the following components (n is the number of state processes). Following the notation in Holmes (2012), \eqn{\mathbf{y}(1)}{y(1)} is the observed data (for \eqn{t=1:T}) while \eqn{\mathbf{y}(2)}{y(2)} is the unobserved data. \eqn{\mathbf{y}(1,1:t-1)}{y(1,1:t-1)} is the observed data from time 1 to \eqn{t-1}.
+#' * `ytT`: E[Y(t) | Y(1,1:T)=y(1,1:T)] (n x T matrix).
+#' * `ytt1`: E[Y(t) | Y(1,1:t-1)=y(1,1:t-1)] (n x T matrix).
+#' * `ytt`: E[Y(t) | Y(1,1:t)=y(1,1:t)] (n x T matrix).
+#' * `OtT`: E[Y(t) t(Y(t)) | Y(1,1:T)=y(1,1:T)] (n x n x T array).
+#' * `var.ytT`: var[Y(t) | Y(1,1:T)=y(1,1:T)] (n x n x T array).
+#' * `var.EytT`: var_X[E_Y[Y(t) | Y(1,1:T)=y(1,1:T), X(t)=x(t)]] (n x n x T array).
+#' * `Ott1`: E[Y(t) t(Y(t)) | Y(1,1:t-1)=y(1,1:t-1)] (n x n x T array).
+#' * `var.ytt1`: var[Y(t) | Y(1,1:t-1)=y(1,1:t-1)] (n x n x T array).
+#' * `var.Eytt1`: var_X[E_Y[Y(t) | Y(1,1:t-1)=y(1,1:t-1), X(t)=x(t)]] (n x n x T array).
+#' * `Ott`: E[Y(t) t(Y(t)) | Y(1,1:t)=y(1,1:t)] (n x n x T array).
+#' * `yxtT`: E[Y(t) t(X(t)) | Y(1,1:T)=y(1,1:T)] (n x m x T array).
+#' * `yxtt1T`: E[Y(t) t(X(t-1)) | Y(1,1:T)=y(1,1:T)] (n x m x T array).
+#' * `yxttpT`: E[Y(t) t(X(t+1)) | Y(1,1:T)=y(1,1:T)] (n x m x T array).
+#' * `errors`: Any error messages due to ill-conditioned matrices.
+#' * `ok`: (TRUE/FALSE) Whether errors were generated.
+#'
+#' @references
+#' Holmes, E. E. (2012) Derivation of the EM algorithm for constrained and unconstrained multivariate autoregressive state-space (MARSS) models. Technical report. arXiv:1302.3919 [stat.ME] Type `RShowDoc("EMDerivation",package="MARSS")` to open a copy. See the section on 'Computing the expectations in the update equations' and the subsections on expectations involving Y.
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso
+#' [MARSS()], [marssMODEL], [MARSSkem()]
+#'
+#' @examples
+#' dat <- t(harborSeal)
+#' dat <- dat[2:3, ]
+#' fit <- MARSS(dat)
+#' EyList <- MARSShatyt(fit)
+#' @export
 MARSShatyt <- function(MLEobj, only.kem = TRUE) {
   MODELobj <- MLEobj[["marss"]]
   if (!is.null(MLEobj[["kf"]])) {

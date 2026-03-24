@@ -4,6 +4,38 @@
 ## Will return a par list that looks just like MLEobj par list
 ## Wants either a scalar (dim=NULL) or a matrix the same size as $par[[elem]] or a marssMLE object with the par element
 
+#' Initial Values for MLE
+#'
+#' @description
+#' Sets up generic starting values for parameters for maximum-likelihood estimation algorithms that use an iterative maximization routine needing starting values. Examples of such algorithms are the EM algorithm in [MARSSkem()] and Newton methods in [MARSSoptim()]. This is a utility function in the [MARSS-package]. It is not exported to the user. Users looking for information on specifying initial conditions should look at the help file for [MARSS()] and the User Guide section on initial conditions.
+#'
+#' The function assumes that the user passed in the inits list using the parameter names in whatever form was specified in the [MARSS()] call. The default is form="marxss". The [MARSSinits()] function calls MARSSinits_foo, where foo is the form specified in the [MARSS()] call. MARSSinits_foo translates the inits list in form foo into form marss.
+#'
+#' @param MLEobj An object of class [marssMLE].
+#' @param inits A list of column vectors (matrices with one column) of the estimated values in each parameter matrix.
+#'
+#' @details
+#' Creates an `inits` parameter list for use by iterative maximization algorithms.
+#'
+#' Default values for `inits` is supplied in `MARSSsettings.R`. The user can alter these and supply any of the following (m is the dim of X and n is the dim of Y in the MARSS model):
+#'
+#' * `elem=A,U` A numeric vector or matrix which will be constructed into `inits$elem` by the command `array(inits$elem),dim=c(n or m,1))`. If elem is fixed in the model, any `inits$elem` values will be overridden and replaced with the fixed value. Default is `array(0,dim=c(n or m,1))`.
+#' * `elem=Q,R,B` A numeric vector or matrix. If length equals the length `MODELobj$fixed$elem` then `inits$elem` will be constructed by `array(inits$elem),dim=dim(MODELobj$fixed$elem))`. If length is 1 or equals dim of `Q` or dim of `R` then `inits$elem` will be constructed into a diagonal matrix by the command `diag(inits$elem)`. If elem is fixed in the model, any `inits$elem` values will be overridden and replaced with the fixed value. Default is `diag(0.05, dim of Q or R)` for `Q` and `R`. Default is `diag(1,m)` for `B`.
+#' * `x0` If `inits$x0=-99`, then starting values for `x0` are estimated by a linear regression through the count data assuming `A` is all zero. This will be a poor start if `inits$A` is not 0. If `inits$x0` is a numeric vector or matrix, `inits$x0` will be constructed by the command `array(inits$x0),dim=c(m,1))`. If `x0` is fixed in the model, any `inits$x0` values will be overridden and replaced with the fixed value. Default is `inits$x0=-99`.
+#' * `Z` If `Z` is fixed in the model, `inits$Z` set to the fixed value. If `Z` is not fixed, then the user must supply `inits$Z`. There is no default.
+#' * `elem=V0` `V0` is never estimated, so this is never used.
+#'
+#' @return
+#' A list with initial values for the estimated values for each parameter matrix in a MARSS model in marss form. So this will be a list with elements `B`, `U`, `Q`, `Z`, `A`, `R`, `x0`, `V0`, `G`, `H`, `L`.
+#'
+#' @note
+#' Within the base code, a form-specific internal `MARSSinits` function is called to allow the output to vary based on form: `MARSSinits_dfa`, `MARSSinits_marss`, `MARSSinits_marxss`.
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso [marssMODEL], [MARSSkem()], [MARSSoptim()]
+#' @export
 MARSSinits <- function(MLEobj, inits = list(B = 1, U = 0, Q = 0.05, Z = 1, A = 0, R = 0.05, x0 = -99, V0 = 5, G = 0, H = 0, L = 0)) {
   MODELobj <- MLEobj[["marss"]]
   method <- MLEobj[["method"]]

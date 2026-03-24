@@ -1,3 +1,18 @@
+#' Model Checking for MLE objects Passed to MARSSkem
+#'
+#' @description
+#' This is a helper function in the [MARSS-package] that checks that the model can be handled by the [MARSSkem] algorithm. It also returns the structure of the model as a list of text strings.
+#'
+#' @param MLEobj An object of class [marssMLE].
+#'
+#' @return
+#' A list with of the model elements A, B, Q, R, U, x0, Z, V0 specifying the structure of the model using text strings).
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso [marssMODEL], [MARSSkem()]
+#' @keywords internal
 MARSSkemcheck <- function(MLEobj) {
   # This checks that the model can be handled by the MARSSkem algorithm
   # Most of this is implementing the restrictions in Summary of Requirements for Degenerate Models in derivation
