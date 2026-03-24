@@ -2,6 +2,38 @@
 #   MARSSvectorizeparam  function
 #   Returns a vector of the ESTIMATED parameters or if vector passed in, that is put into list form for MLEobj$marss
 #######################################################################################################
+#' Vectorize or Replace the par List
+#'
+#' Converts `MLEobj[["what"]]` to a vector or assigns a vector to
+#' `MLEobj[["what"]]`. This is a utility function in the [MARSS-package] for
+#' [marssMODEL] objects of form="marss" and is not exported. Users achieve this
+#' functionality with [coef.marssMLE].
+#'
+#' Utility function to generate parameter vectors for optimization functions,
+#' and to set `MLEobj[[what]]` using a vector of values. The function bases the
+#' unlisting and naming order on `names(MLEobj$marss$fixed)`. Appends matrix
+#' name to the row names in the par list.
+#'
+#' @param MLEobj An object of class [marssMLE].
+#' @param parvec NA or a vector. See Value.
+#' @param what What part of the MLEobj is being replaced or vectorized. Need to
+#'   be a par list.
+#'
+#' @return If parvec=NA, a vector of the elements of the `what` element.
+#'   Otherwise, a [marssMLE] object with `MLEobj[["what"]]` set by parvec.
+#'
+#' @author Eli Holmes and Kellie Wills, NOAA, Seattle, USA.
+#'
+#' @seealso [marssMLE]
+#'
+#' @examples
+#' dat <- t(harborSealWA)
+#' dat <- dat[2:4, ]
+#' kem <- MARSS(dat)
+#' paramvec <- MARSS:::MARSSvectorizeparam(kem)
+#' paramvec
+#' @keywords internal
+
 MARSSvectorizeparam <- function(MLEobj, parvec = NA, what = "par") {
   # This helper function  ONLY FOR marssMODEL form=marss!!
   # if parvec=NA) returns a vector version of all the estimated parameters (for use in say optim) from a mssm  model
