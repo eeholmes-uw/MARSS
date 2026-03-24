@@ -18,12 +18,12 @@
 #' @param CI.sim Number of simulations for bootstrap confidence intervals (positive integer).
 #'
 #' @details
-#' Panel 1: Time-series plot of the data.
-#' Panel 2: CDF of extinction risk.
-#' Panel 3: PDF of time to reach threshold.
-#' Panel 4: Probability of reaching different thresholds during forecast period.
-#' Panel 5: Sample projections.
-#' Panel 6: TMU plot (uncertainty as a function of the forecast).
+#' * Panel 1: Time-series plot of the data.
+#' * Panel 2: CDF of extinction risk.
+#' * Panel 3: PDF of time to reach threshold.
+#' * Panel 4: Probability of reaching different thresholds during forecast period.
+#' * Panel 5: Sample projections.
+#' * Panel 6: TMU plot (uncertainty as a function of the forecast).
 #'
 #' @return
 #' If `return.model=TRUE`, an object of class [marssMLE()].
