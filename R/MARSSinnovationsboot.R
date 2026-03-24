@@ -4,6 +4,58 @@
 #   It creates bootstrap data via sampling from the standardized innovations matrix
 #   In the MARSS code, this is referred to as the nonparametric bootstrap.  Strictly speaking, it is not nonparametric.
 ########################################################################################################################
+#' Bootstrapped Data using Stoffer and Wall's Algorithm
+#'
+#' @description
+#' Creates bootstrap data via sampling from the standardized innovations matrix.
+#' This is an internal function in the **MARSS** package and is not exported.
+#' Users should access this with [MARSSboot()].
+#'
+#' @param MLEobj An object of class [marssMLE]. This object must have a `$par`
+#'   element containing MLE parameter estimates from e.g. [MARSSkem()] or
+#'   [MARSS()]. This algorithm may not be used if there are missing datapoints
+#'   in the data.
+#' @param nboot Number of bootstraps to perform.
+#' @param minIndx Number of innovations to skip. Stoffer & Wall suggest not
+#'   sampling from innovations 1-3.
+#'
+#' @details
+#' Stoffer and Wall (1991) present an algorithm for generating CIs via a
+#' non-parametric bootstrap for state-space models. The basic idea is that the
+#' Kalman filter can be used to generate estimates of the residuals of the model
+#' fit. These residuals are then standardized and resampled and used to generate
+#' bootstrapped data using the MARSS model and its maximum-likelihood parameter
+#' estimates. One of the limitations of the Stoffer and Wall algorithm is that
+#' it cannot be used when there are missing data, unless all data at time
+#' \eqn{t} are missing.
+#'
+#' @return
+#' A list containing the following components:
+#'
+#' * `boot.states`: Array (dim is m x tSteps x nboot) of simulated state processes.
+#' * `boot.data`: Array (dim is n x tSteps x nboot) of simulated data.
+#' * `marss`: [marssMODEL] object element of the [marssMLE] object (`marssMLE$marss`) in "marss" form.
+#' * `nboot`: Number of bootstraps performed.
+#'
+#' m is the number state processes (x in the MARSS model) and n is the number
+#' of observation time series (y in the MARSS model).
+#'
+#' @references
+#' Stoffer, D. S., and K. D. Wall. 1991. Bootstrapping state-space models:
+#' Gaussian maximum likelihood estimation and the Kalman filter. Journal of
+#' the American Statistical Association 86:1024-1033.
+#'
+#' @author
+#' Eli Holmes and Eric Ward, NOAA, Seattle, USA.
+#'
+#' @seealso [stdInnov()], [MARSSparamCIs()], [MARSSboot()]
+#'
+#' @examples
+#' dat <- t(kestrel)
+#' dat <- dat[2:3, ]
+#' fit <- MARSS(dat, model = list(U = "equal", Q = diag(.01, 2)))
+#' boot.obj <- MARSSinnovationsboot(fit)
+#' @export
 MARSSinnovationsboot <- function(MLEobj, nboot = 1000, minIndx = 3) {
   if (any(is.na(MLEobj$marss$data))) {
     stop("Stopped in MARSSinnovationsboot() because this algorithm resamples from the innovations and doesn't allow missing values.\n", call. = FALSE)
@@ -88,6 +140,39 @@ MARSSinnovationsboot <- function(MLEobj, nboot = 1000, minIndx = 3) {
 ######################################################################################################################
 #   stdInnov
 ######################################################################################################################
+#' Standardized Innovations
+#'
+#' @description
+#' Standardizes Kalman filter innovations. This is a helper function called by
+#' [MARSSinnovationsboot()] in the **MARSS** package. Not exported.
+#'
+#' @param SIGMA n x n x T array of Kalman filter innovations variances. This is
+#'   output from [MARSSkf()].
+#' @param INNOV n x T matrix of Kalman filter innovations. This is output from
+#'   [MARSSkf()].
+#'
+#' @details
+#' n = number of observation (y) time series. T = number of time steps in the
+#' time series.
+#'
+#' @return
+#' n x T matrix of standardized innovations.
+#'
+#' @references
+#' Stoffer, D. S., and K. D. Wall. 1991. Bootstrapping state-space models:
+#' Gaussian maximum likelihood estimation and the Kalman filter. Journal of
+#' the American Statistical Association 86:1024-1033.
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso [MARSSboot()], [MARSSkf()], [MARSSinnovationsboot()]
+#'
+#' @examples
+#' \dontrun{
+#' std.innovations <- stdInnov(kfList$Sigma, kfList$Innov)
+#' }
+#' @keywords internal
 stdInnov <- function(SIGMA, INNOV) {
   # This function added by EW Nov 3, 2008
   # SIGMA is covariance matrix, E are original innovations

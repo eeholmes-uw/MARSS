@@ -3,6 +3,58 @@
 #   Parametrically simulates from a MARSS parameter list
 #   Only works for marss form.  marxss form needs to be converted to marss before this will work.
 #######################################################################################################
+#' Simulate Data from a MARSS Model
+#'
+#' Generates simulated data from a MARSS model with specified parameter
+#' estimates. This is a base function in the [MARSS-package].
+#'
+#' Optional argument `miss.loc` is an array of dimensions n x tSteps x nsim,
+#' specifying where to put missing values in the simulated data. If missing,
+#' this would be constructed using `MLEobj$marss$data`. If the locations of the
+#' missing values are the same for all simulations, `miss.loc` can be a matrix
+#' of `dim=c(n, tSteps)` (the original data for example). The default, if
+#' `miss.loc` is left off, is that there are no missing values even if
+#' `MLEobj$marss$data` has missing values.
+#'
+#' @param object A fitted [marssMLE] object, as output by [MARSS()].
+#' @param tSteps Number of time steps in each simulation. If left off, it is
+#'   taken to be consistent with `MLEobj`.
+#' @param nsim Number of simulated data sets to generate.
+#' @param silent Suppresses progress bar.
+#' @param miss.loc Optional matrix specifying where to put missing values. See
+#'   Details.
+#'
+#' @return A list with the following components:
+#'
+#' * `sim.states`: Array (dim m x tSteps x nsim) of state processes simulated
+#'   from parameter estimates. m is the number of states (rows in X).
+#' * `sim.data`: Array (dim n x tSteps x nsim) of data simulated from parameter
+#'   estimates. n is the number of rows of data (Y).
+#' * `MLEobj`: The [marssMLE] object from which the data were simulated.
+#' * `miss.loc`: Matrix identifying where missing values were placed. It should
+#'   be exactly the same dimensions as the data matrix. The location of NAs in
+#'   the miss.loc matrix indicate where the missing values are.
+#' * `tSteps`: Number of time steps in each simulation.
+#' * `nsim`: Number of simulated data sets generated.
+#'
+#' @author Eli Holmes and Eric Ward, NOAA, Seattle, USA.
+#'
+#' @seealso [marssMODEL], [marssMLE], [MARSSboot()]
+#'
+#' @examples
+#' d <- harborSeal[, c(2, 11)]
+#' dat <- t(d)
+#' fit <- MARSS(dat)
+#'
+#' # simulate data that are the
+#' # same length as original data and no missing data
+#' sim.obj <- MARSSsimulate(fit, tSteps = dim(d)[1], nsim = 5)
+#'
+#' # simulate data that are the
+#' # same length as original data and have missing data in the same location
+#' sim.obj <- MARSSsimulate(fit, tSteps = dim(d)[1], nsim = 5, miss.loc = dat)
+#' @export
+
 simulate.marssMLE <- function(object, nsim = 1, seed, ..., tSteps = NULL, silent = TRUE, miss.loc = NULL) {
   MARSSsimulate(object, tSteps = tSteps, nsim = nsim, silent = silent, miss.loc = miss.loc)
 }

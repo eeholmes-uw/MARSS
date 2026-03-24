@@ -1,3 +1,20 @@
+#' MARSS Error Messages and Warnings
+#'
+#' @description
+#' Prints out more information for MARSS error messages and warnings.
+#'
+#' @param number An error or warning message number.
+#'
+#' @return
+#' A print out of information.
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @examples
+#' # Show all the info options
+#' MARSSinfo()
+#' @export
 MARSSinfo <- function(number) {
   if (missing(number)) {
     cat("Pass in a single label (in quotes) to get info on a MARSS error or warning message.

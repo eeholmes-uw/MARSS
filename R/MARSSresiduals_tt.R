@@ -1,3 +1,89 @@
+#' MARSS Contemporaneous Residuals
+#'
+#' @description
+#' Calculates the standardized (or auxiliary) contemporaneous residuals, aka
+#' the residuals and their variance conditioned on the data up to time \eqn{t}.
+#' Contemporaneous residuals are only for the observations. Not exported.
+#' Access this function with `MARSSresiduals(object, type="tt")`.
+#'
+#' @param object An object of class [marssMLE].
+#' @param method Algorithm to use. Currently only "SS".
+#' @param normalize TRUE/FALSE See details.
+#' @param silent If TRUE, don't print inversion warnings.
+#' @param fun.kf Can be ignored. This will change the Kalman filter/smoother
+#'   function from the value in `object$fun.kf` if desired.
+#'
+#' @return
+#' A list with the following components:
+#'
+#' * `model.residuals`: The observed contemporaneous model residuals: data minus
+#'   the model predictions conditioned on the data 1 to t. A n x T matrix. NAs
+#'   will appear where the data are missing.
+#' * `state.residuals`: All NA. There are no contemporaneous residuals for the
+#'   states.
+#' * `residuals`: The residuals. `model.residuals` are in rows 1:n and
+#'   `state.residuals` are in rows n+1:n+m.
+#' * `var.residuals`: The joint variance of the residuals conditioned on
+#'   observed data from 1 to t. This only has values in the 1:n,1:n upper block
+#'   for the model residuals.
+#' * `std.residuals`: The Cholesky standardized residuals as a n+m x T matrix.
+#'   Rows n+1:n+m are all NA.
+#' * `mar.residuals`: The marginal standardized residuals as a n+m x T matrix.
+#' * `bchol.residuals`: Because state residuals do not exist, this will be
+#'   equivalent to the Cholesky standardized residuals, `std.residuals`.
+#' * `E.obs.residuals`: The expected value of the model residuals conditioned on
+#'   the observed data 1 to t. Returned as a n x T matrix.
+#' * `var.obs.residuals`: The variance of the model residuals conditioned on the
+#'   observed data. Returned as a n x n x T matrix. For observed data, this will
+#'   be 0. See [MARSSresiduals.tT()] for a discussion.
+#' * `msg`: Any warning messages.
+#'
+#' @details
+#' This function returns the conditional expected value (mean) and variance of
+#' the model contemporaneous residuals. 'conditional' means conditioned on the
+#' observed data up to time \eqn{t} and a set of parameters.
+#'
+#' **Model residuals**
+#'
+#' \eqn{\mathbf{v}_t}{v(t)} is the difference between the data and the
+#' predicted data at time \eqn{t} given \eqn{\mathbf{x}_t}{x(t)}:
+#' \deqn{ \mathbf{v}_t = \mathbf{y}_t - \mathbf{Z} \mathbf{x}_t - \mathbf{a} - \mathbf{d}\mathbf{d}_{t}}{ v(t) = y(t) - Z x(t) - a - D d(t)}
+#' The observed model residuals use the data up to time \eqn{t}:
+#' \deqn{ \hat{\mathbf{v}}_t = \mathbf{y}_t - \mathbf{Z}\mathbf{x}_t^{t} - \mathbf{a} - \mathbf{D}\mathbf{d}_{t}}{ hatv(t) = y(t) - Z xtt - a - D d(t)}
+#'
+#' The conditional variance is:
+#' \deqn{ \hat{\Sigma}_t = \mathbf{R}+\mathbf{Z} \mathbf{V}_t^{t} \mathbf{Z}^\top }{hatSigma(t) = R + Z Vtt t(Z)}
+#'
+#' **Normalized residuals**
+#'
+#' If `normalize=FALSE`, the model is:
+#' \deqn{\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t}{ y(t) = Z x(t) + a + v(t)}
+#' \deqn{\mathbf{x}_t = \mathbf{B} \mathbf{x}_{t-1} + \mathbf{u} + \mathbf{w}_t}{ x(t) = B x(t-1) + u + w(t)}
+#' If `normalize=TRUE`:
+#' \deqn{\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{H}\mathbf{v}_t}{ y(t) = Z x(t) + a + Hv(t)}
+#' \deqn{\mathbf{x}_t = \mathbf{B} \mathbf{x}_{t-1} + \mathbf{u} + \mathbf{G}\mathbf{w}_t}{ x(t) = B x(t-1) + u + Gw(t)}
+#' with the variance of \eqn{\mathbf{V}_t}{V(t)} and \eqn{\mathbf{W}_t}{W(t)}
+#' equal to \eqn{\mathbf{I}}{I} (identity).
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso [MARSSresiduals.tT()], [MARSSresiduals.tt1()], [fitted.marssMLE()], [plot.marssMLE()]
+#'
+#' @examples
+#' dat <- t(harborSeal)
+#' dat <- dat[c(2, 11), ]
+#' fit <- MARSS(dat)
+#'
+#' # Returns a matrix
+#' MARSSresiduals(fit, type = "tt")$std.residuals
+#' # Returns a data frame in long form
+#' residuals(fit, type = "tt")
+#'
+#' @references
+#' Holmes, E. E. 2014. Computation of standardized residuals for (MARSS) models.
+#' Technical Report. arXiv:1411.0045.
+#' @export
 MARSSresiduals.tt <- function(object, method = c("SS"), normalize = FALSE, silent = FALSE, fun.kf = c("MARSSkfas", "MARSSkfss")) {
   # These are the residuals and their variance conditioned on the data up to time t
   # state residuals do not exist for this case

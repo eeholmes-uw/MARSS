@@ -1,3 +1,105 @@
+#' MARSS One-Step-Ahead Residuals
+#'
+#' @description
+#' Calculates the standardized (or auxiliary) one-step-ahead residuals, aka the
+#' innovations residuals and their variance. Not exported. Access this function
+#' with `MARSSresiduals(object, type="tt1")`. To get the residuals as a data
+#' frame in long-form, use [residuals()][residuals.marssMLE] with
+#' `type="tt1"`.
+#'
+#' @param object An object of class [marssMLE].
+#' @param method Algorithm to use. Currently only "SS".
+#' @param normalize TRUE/FALSE See details.
+#' @param silent If TRUE, don't print inversion warnings.
+#' @param fun.kf Can be ignored. This will change the Kalman filter/smoother
+#'   function from the value in `object$fun.kf` if desired.
+#'
+#' @return
+#' A list with the following components:
+#'
+#' * `model.residuals`: The observed one-step-ahead model residuals: data minus
+#'   the model predictions conditioned on the data \eqn{t=1} to \eqn{t-1}.
+#'   These are termed innovations. A n x T matrix. NAs will appear where the
+#'   data are missing.
+#' * `state.residuals`: The one-step-ahead state residuals
+#'   \eqn{ \mathbf{x}_{t+1}^{t+1} - \mathbf{B}\mathbf{x}_{t}^t - \mathbf{u} }{ xtt(t+1) - B xtt(t) - u}.
+#'   Note, state residual at time \eqn{t} is the transition from time \eqn{t=t}
+#'   to \eqn{t+1}.
+#' * `residuals`: The residuals conditioned on the observed data up to time
+#'   \eqn{t-1}. Returned as a (n+m) x T matrix with `model.residuals` in rows
+#'   1 to n and `state.residuals` in rows n+1 to n+m. NAs will appear in rows
+#'   1 to n in the places where data are missing.
+#' * `var.residuals`: The joint variance of the one-step-ahead residuals.
+#'   Returned as a n+m x n+m x T matrix.
+#' * `std.residuals`: The Cholesky standardized residuals as a n+m x T matrix.
+#'   This is `residuals` multiplied by the inverse of the lower triangle of the
+#'   Cholesky decomposition of `var.residuals`. The model standardized residuals
+#'   associated with the missing data are replaced with NA.
+#' * `mar.residuals`: The marginal standardized residuals as a n+m x T matrix.
+#'   This is `residuals` multiplied by the inverse of the diagonal matrix formed
+#'   by the square-root of the diagonal of `var.residuals`. The model marginal
+#'   residuals associated with the missing data are replaced with NA.
+#' * `bchol.residuals`: The Block Cholesky standardized residuals as a (n+m) x
+#'   T matrix.
+#' * `E.obs.residuals`: The expected value of the model residuals conditioned on
+#'   the observed data \eqn{t=1} to \eqn{t-1}. Returned as a n x T matrix.
+#'   This will be all 0s. Included for completeness.
+#' * `var.obs.residuals`: For one-step-ahead residuals, this will be the same
+#'   as the 1:n, 1:n upper diagonal block in `var.residuals`. Included for
+#'   completeness and as a code check.
+#' * `msg`: Any warning messages.
+#'
+#' @details
+#' This function returns the conditional expected value (mean) and variance of
+#' the one-step-ahead residuals. 'conditional' means conditioned on the observed
+#' data up to time \eqn{t-1} and a set of parameters.
+#'
+#' **Model residuals**
+#'
+#' \eqn{\mathbf{v}_t}{v_t} is the difference between the data and the predicted
+#' data at time \eqn{t} given \eqn{\mathbf{x}_t}{x(t)}:
+#' \deqn{ \mathbf{v}_t = \mathbf{y}_t - \mathbf{Z} \mathbf{x}_t - \mathbf{a} - \mathbf{D}\mathbf{d}_t}{ v(t) = y(t) - Z x(t) - a - D d(t)}
+#' The observed model residuals \eqn{\hat{\mathbf{v}}_t}{hatv(t)} use the data
+#' up to time \eqn{t-1}:
+#' \deqn{ \hat{\mathbf{v}}_t = \mathbf{y}_t - \mathbf{Z}\mathbf{x}_t^{t-1} - \mathbf{a} - \mathbf{D}\mathbf{d}_t}{ hatv(t) = y(t) - Z xtt1(t) - a - D d(t)}
+#'
+#' **State residuals**
+#'
+#' The estimated state residuals:
+#' \deqn{ \hat{\mathbf{w}}_{t+1} = \mathbf{x}_{t+1}^{t+1} - \mathbf{B}\mathbf{x}_{t}^t - \mathbf{u} - \mathbf{C}\mathbf{c}_{t+1}}{ hatw(t+1) = xtt(t+1) - B xtt(t) - u - C c(t+1)}
+#'
+#' **Normalized residuals**
+#'
+#' If `normalize=FALSE`, the model is:
+#' \deqn{\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t}{ y(t) = Z x(t) + a + v(t)}
+#' \deqn{\mathbf{x}_t = \mathbf{B} \mathbf{x}_{t-1} + \mathbf{u} + \mathbf{w}_t}{ x(t) = B x(t-1) + u + w(t)}
+#' If `normalize=TRUE`:
+#' \deqn{\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{H}\mathbf{v}_t}{ y(t) = Z x(t) + a + Hv(t)}
+#' \deqn{\mathbf{x}_t = \mathbf{B} \mathbf{x}_{t-1} + \mathbf{u} + \mathbf{G}\mathbf{w}_t}{ x(t) = B x(t-1) + u + Gw(t)}
+#' with the variance of \eqn{\mathbf{V}_t}{V(t)} and \eqn{\mathbf{W}_t}{W(t)}
+#' equal to \eqn{\mathbf{I}}{I} (identity).
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso [MARSSresiduals.tT()], [MARSSresiduals.tt()], [fitted.marssMLE()], [plot.marssMLE()]
+#'
+#' @examples
+#' dat <- t(harborSeal)
+#' dat <- dat[c(2, 11), ]
+#' fit <- MARSS(dat)
+#'
+#' MARSSresiduals(fit, type = "tt1")$std.residuals
+#' residuals(fit, type = "tt1")
+#'
+#' @references
+#' R. H. Shumway and D. S. Stoffer (2006). Section on the calculation of the
+#' likelihood of state-space models in Time series analysis and its
+#' applications. Springer-Verlag, New York.
+#'
+#' Holmes, E. E. 2014. Computation of standardized residuals for (MARSS) models.
+#' Technical Report. arXiv:1411.0045.
+#' @export
 MARSSresiduals.tt1 <- function(object, method = c("SS"), normalize = FALSE, silent = FALSE, fun.kf = c("MARSSkfas", "MARSSkfss")) {
   # These are the residuals and their variance conditioned on the data up to time t-1
 
