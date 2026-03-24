@@ -1,3 +1,26 @@
+#' Names for marssMLE Object Components
+#'
+#' @description
+#' Puts names on the par, start, par.se, init components of [marssMLE]
+#' objects. This is a utility function in the **MARSS** package and is not
+#' exported.
+#'
+#' @param MLEobj An object of class [marssMLE].
+#'
+#' @details
+#' The X.names and Y.names are attributes of [marssMODEL] objects (which
+#' would be in `$marss` and `$model` in the [marssMLE] object). These names
+#' are applied to the par elements in the [marssMLE] object.
+#'
+#' @return
+#' The object passed in, with row and column names on matrices as specified.
+#'
+#' @author
+#' Eli Holmes, NOAA, Seattle, USA.
+#'
+#' @seealso [marssMLE], [marssMODEL]
+#'
+#' @keywords internal
 MARSSapplynames <- function(MLEobj) {
   ## Helper function to put names on the elements in a marssMLE object
   if (!inherits(MLEobj, "marssMLE")) {
